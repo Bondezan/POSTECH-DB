@@ -1,26 +1,35 @@
-# Sistema de Oficina Mecânica
+# Tech Challenge - Sistema Integrado de Atendimento e Execução de Serviços
 
-Este projeto consiste em um sistema de gerenciamento para uma oficina mecânica de pequeno porte, desenvolvido como parte de um trabalho acadêmico. O sistema foi projetado para otimizar processos do dia a dia, como o controle de ordens de serviço, gerenciamento de estoque de peças e cadastro de clientes e veículos.
+Este projeto consiste na primeira versão (MVP) do back-end de um Sistema Integrado de Atendimento e Execução de Serviços para uma oficina mecânica de médio porte. O objetivo é mitigar problemas de desorganização operacional, automatizar o fluxo de ordens de serviço (OS), controlar insumos e permitir o acompanhamento de status em tempo real pelos clientes.
+
+O sistema foi desenvolvido seguindo os princípios de **Domain-Driven Design (DDD)** e estruturado em uma **arquitetura monolítica em camadas**.
 
 ---
 
-## 🛠️ Escolha da Infraestrutura de Banco de Dados: PostgreSQL
+## 🛠️ Justificativa de Escolha do Banco de Dados: PostgreSQL
 
-Para o armazenamento e gerenciamento dos dados do sistema, a tecnologia escolhida foi o **PostgreSQL**. A decisão baseou-se em critérios técnicos de estabilidade, compatibilidade e custo-benefício para o cenário do modelo de negócio proposto.
+Conforme os requisitos técnicos estabelecidos para a Fase 1, a escolha do banco de dados é livre mediante justificativa. Optou-se pelo **PostgreSQL** pelos seguintes fatores estratégicos e de arquitetura:
 
-### Principais Justificativas para a Escolha:
+### 1. Robustez Relacional e Integridade de Dados
+Como o sistema exige um controle rígido e amarrado de CRUDs de clientes, veículos, serviços e controle de estoque de peças, o modelo relacional do PostgreSQL garante consistência estrita através de chaves estrangeiras. Isso impede anomalias graves, como deletar um veículo que possui uma ordem de serviço vinculada.
 
-*   **Modelo Relacional e Integridade de Dados:** Sendo um banco de dados relacional (SGBDR), o PostgreSQL garante a consistência total dos dados por meio de chaves estrangeiras e restrições (*constraints*). Isso impede falhas graves, como a exclusão acidental de um cliente que possui uma ordem de serviço em aberto ou a venda de uma peça inexistente no estoque.
-*   **Ferramenta Open-Source Inteligente:** O PostgreSQL é 100% gratuito e de código aberto. Ele se destaca como a escolha ideal para cenários de média complexidade que não exigem o estresse ou o custo de licenças corporativas proprietárias.
-*   **Fácil Escalabilidade:** Caso a oficina mecânica cresça ou se expanda para uma rede de franquias no futuro, o banco está preparado para lidar com volumes massivos de dados e replicação sem perda de performance.
-*   **Ecossistema com IDEs Gratuitas:** O desenvolvimento e monitoramento das tabelas e consultas são facilitados pelo uso de ferramentas visuais gratuitas e robustas do mercado, como o [DBeaver](https://dbeaver.io) ou o pgAdmin.
-*   **Integração Nativa com o Django (Python):** O ecossistema de backend do projeto utiliza o framework Django. O PostgreSQL é historicamente o banco oficial recomendado pela comunidade Django. Essa união fornece suporte total ao Django ORM e acesso a recursos avançados e otimizados, como mapeamento nativo de campos complexos e migrações totalmente estáveis.
+### 2. Suporte Nativo a JSONB para Histórico Dinâmico
+O PostgreSQL lida com o tipo de dado `JSONB` de forma otimizada. Esse recurso é ideal para persistir logs de auditoria, históricos de status da OS (Recebida, Em diagnóstico, Em execução, etc.) ou checklists de vistorias iniciais que possuem campos altamente dinâmicos por modelo de veículo.
+
+### 3. Integração Perfeita com o Ecossistema Python/Django
+O back-end do MVP utiliza o framework Django. O PostgreSQL é o banco de dados historicamente recomendado pela comunidade Django, oferecendo máxima compatibilidade com o Django ORM, estabilidade nas migrações de dados (`migrate`) e desempenho otimizado com o driver nativo `psycopg`.
+
+### 4. Prontidão para Conteinerização (Docker & DevOps)
+A infraestrutura do PostgreSQL possui imagens oficiais leves e maduras no Docker Hub. Isso facilita o cumprimento do requisito de entrega que exige um arquivo `docker-compose.yml` para orquestrar o ambiente completo da aplicação local de forma simples.
+
+### 5. Custo Zero e Escalabilidade Enterprise
+Sendo uma ferramenta de código aberto de alta performance, o PostgreSQL elimina custos com licenças comerciais para a oficina. Ao mesmo tempo, caso o negócio se expanda, o banco suporta replicação e alta concorrência de múltiplos usuários (como atendentes, mecânicos e clientes via API).
 
 ---
 
 ## 📊 Análise Comparativa de Mercado
 
-Para validar a escolha do PostgreSQL diante de outras soluções do mercado, foi elaborada a seguinte matriz comparativa focada nos requisitos do sistema da oficina mecânica:
+A matriz abaixo detalha a superioridade técnica do PostgreSQL frente a outros bancos para as necessidades específicas do escopo desta oficina:
 
 ```text
 =========================================================================================
@@ -37,13 +46,15 @@ Conexão com Django  | Perfeita    | Boa         | Apenas Teste| Ruim        | C
 * Nota: O MongoDB possui versão gratuita, mas o suporte escalável em nuvem é pago.
 ```
 
-### Conclusão Teórica do Comparativo:
-O **SQLite** mostrou-se inviável devido ao travamento de escrita em acessos simultâneos na oficina. O **MongoDB** falha na amarração rígida das relações entre carros e clientes. Já o **MySQL** possui limitações no tratamento do Django e de dados dinâmicos em formato JSON se comparado ao Postgres. Por fim, bancos corporativos como o **SQL Server** entregariam recursos semelhantes, porém sob custos de licenciamento comercial proibitivos para o modelo de negócios de uma oficina de pequeno porte.
+*   **Por que não o SQLite?** Apesar de prático, o SQLite possui sérias restrições de concorrência, travando o arquivo de banco de dados caso múltiplos usuários tentem atualizar ordens de serviço simultaneamente.
+*   **Por que não o MongoDB?** Por ser NoSQL, ele carece de mecanismos nativos eficientes para garantir a consistência relacional exigida entre tabelas cruciais do domínio (Cliente ➡️ Veículo ➡️ Peças ➡️ OS).
 
 ---
 
-## 🚀 Tecnologias Utilizadas no Projeto
+## 🚀 Tecnologias e Arquitetura
 
-*   **Backend:** Python com o framework [Django](https://djangoproject.com)
-*   **Banco de Dados:** [PostgreSQL](https://postgresql.org)
-*   **Gerenciador do Banco:** DBeaver Community Edition
+*   **Backend:** Python / Django Framework
+*   **Banco de Dados:** PostgreSQL (SGBDR Open-source)
+*   **Arquitetura:** Monolito em Camadas orientado a Domain-Driven Design (DDD)
+*   **Segurança:** Autenticação via JWT para APIs Administrativas
+*   **Orquestração:** Docker e Docker Compose
